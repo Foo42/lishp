@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <script src="lib/sha1.js">
+    </script>
+  </head>
+  <body>
+
+    <section>
+      <h2>Bindings</h2>
+      <input type="text" name="cli" id="cli" style="width:100%;" value="">
+      <ul class="bindings-display">
+      </ul>
+    </section>
+
+    <script type="text/javascript">
+      console.log(Sha1);
+      function create(){
+
+      }
+      const objects = {};
+      const bindings = {};
+      const generatedBindings = {};
+      const evaluated = {};
+      const subscriptions = {};
+      const ledger = [];
+      const builtinFunctions = {
+        double: function(value){
+          return value * 2;
+        },
+        apply: function(){
+          const f = arguments[0];
+          const args = [].slice.call(arguments,1);
+          func = eval('('+f+')');
+          return func.apply(this, args);
+        },
+        evaluate: function(expression){
+          return evaluate(expression);
+        },
+        setOf: function(){
+          return [].slice.call(arguments);
+        },
+        union: function(){
+          return //
+        }
+      }
+
+      function hash(value){
+        if(typeof(value) === 'string'){
+          return Sha1.hash(value);
+        }
+        return Sha1.hash(JSON.stringify(value));
+      }
+
+      function store(value){
+        const key = hash(value);
+        if(objects[key] === undefined){
+          objects[key] = value;
+          ledger.push(['stored',{key}]);
+          console.log(`New object stored with key ${key}`);
+          return key;
+        }
+        console.log(`Object with key ${key} already known.`);
+        return key;
+      }
+
+      function retrieve(key){
+        return objects[key];
+      }
+
+      function chainOn(previous, newValueKey){
+        const element = [newValueKey, previous]
+        return store(element);
+      }
+
+      //question, should bind always create a chain entry? If so what should be returned for its value?
+      function bind(label, key){
+        const previous = bindings[label];
+        if(currentValue(label) === key){
+          return previous;
+        }
+        const chainElement = chainOn(previous, key);
+        bindings[label] = chainElement;
+        ledger.push(['bound',{label,key,chainElement}]);
+        if(!previous){
+          console.log(`first bind of ${label}. Began chain at ${chainElement}`);
+        }
+        if(subscriptions[label]){
+          subscriptions[label].forEach(sub => sub());
+        }
+        return chainElement;
+      }
+
+      function currentValue(label){
+        const binding = bindings[label];
+        return binding && retrieve(binding)[0];
+      }
+      function allValues(label){
+        const values = [];
+        let pHead = bindings[label];
+        while(pHead){
+          const [value,pNext] = retrieve(pHead);
+          values.push(value);
+          pHead = pNext;
+        }
+        return values;
+      }
+
+
+      function parseExpression(expression){
+        const probablyExpression = /^\(.*\)$/.test(expression);
+        if(!probablyExpression){
+          return false;
+        }
+        const key = hash(expression);
+        let inner = expression.substr(1,expression.length-2);
+        let level = 0;
+        const parts = [[]];
+        const last = inner.length -1;
+        for(let i = 0; i<=last; i++){
+          let l = inner[i];
+          if(l === '('){
+            level += 1;
+            parts[parts.length - 1].push(l);
+          } else if(l===')'){
+            level -= 1;
+            parts[parts.length - 1].push(l);
+          } else if(level === 0 && l === ',') {
+            parts.push([]);
+          } else {
+            parts[parts.length - 1].push(l);
+          }
+        }
+        const elements = parts.map(x => x.join('')).map(x => x.trim());
+        const f = elements[0];
+        const args = elements.slice(1);
+        return {key,f,args};
+      }
+
+      function evaluate(expression){
+        const parsed = parseExpression(expression);
+        if(!parsed){
+          return expression;
+        }
+        if(evaluated[parsed.key] !== undefined){
+          return evaluated[parsed.key];
+        }
+        console.log(`applying ${parsed.f} to ${parsed.args}`);
+        const func = builtinFunctions[parsed.f];
+        const result = func.apply(null, parsed.args.map(arg => retrieve(arg) || evaluate(arg)));
+        evaluated[parsed.key] = result;
+        return result;
+      }
+
+      function bindFrom(label, expression){
+        //todo, historic evaluation
+        const parsed = parseExpression(expression);
+        const labels = parsed.args.filter(arg => bindings[arg] !== undefined).filter(arg => arg !== label);
+        console.log('depends on',labels);
+
+        function generateValueForBinding(){
+          const currentArgs = parsed.args.map(arg => (arg === label && label)||(bindings[arg] && currentValue(arg)) || arg);
+          console.log('args have current values of', currentArgs)
+          const currentExpression = `(${parsed.f}, ${currentArgs.join(', ')})`;
+          console.log('currentExpression',currentExpression);
+          bind(label, currentExpression);
+        }
+        generateValueForBinding();
+        labels.forEach(argLabel => {
+          (subscriptions[argLabel] = (subscriptions[argLabel] ||[])).push(generateValueForBinding);
+        });
+
+
+        //todo
+        // push values via subscriptions to generate new values on expression chain
+      }
+
+      function render(){
+        const labels = Object.keys(bindings);
+        const html = labels.map(label => `<li>${label}: <ul>${allValues(label).map(val => (retrieve(val) || evaluate(val))).map(val => '<li>'+val+' ↵</li>').join('')}</ul></li>`).join('\n');
+        document.querySelector('.bindings-display').innerHTML = html;
+      }
+      setInterval(render, 500);
+      const cliInput = document.getElementById('cli');
+      function processCli(){
+        eval(cliInput.value);
+        cliInput.value = '';
+      }
+      cliInput.addEventListener('keyup', ev => ev.key === 'Enter' && processCli());
+    </script>
+  </body>
+</html>
