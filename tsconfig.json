@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"target": "es6",
+		"noImplicitAny": false,
+		"sourceMap": true,
+		"strictNullChecks": true
+  },
+	"include": [
+		"index.ts",
+		"src/**/*",
+		"test/**/*.ts"
+	],
+	"exclude": [
+		"node_modules",
+		"**/*.spec.ts"
+	]
+}

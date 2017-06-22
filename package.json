@@ -1,0 +1,27 @@
+{
+  "name": "lishp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "nyc --reporter=text mocha test/ --recursive --timeout 30000",
+    "ts:compile": "tsc",
+    "dev": "nodemon -e ts,hbs,json --exec \"npm run ts:compile && npm run test || echo fail\""
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chai": "^3.5.2",
+    "@types/mocha": "^2.2.41",
+    "chai": "^3.5.0",
+    "mocha": "^3.4.1",
+    "nyc": "^10.3.2",
+    "tslint": "^5.2.0"
+  },
+  "dependencies": {
+    "@types/node": "^8.0.1",
+    "bluebird": "^3.5.0",
+    "lodash": "^4.17.4",
+    "typescript": "^2.3.2"
+  }
+}

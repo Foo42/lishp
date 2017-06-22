@@ -1,0 +1,8 @@
+.DS_Store
+.dockerignore
+.git
+.gitignore
+.nyc_output
+Dockerfile
+coverage/
+node_modules/

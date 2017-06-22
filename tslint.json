@@ -1,0 +1,18 @@
+{
+  "extends": "tslint:recommended",
+  "rules": {
+    "indent": [true, "tabs"],
+    "quotemark": [true, "single", "avoid-escape"],
+    "no-var-requires": false,
+    "no-string-literal": false,
+    "object-literal-sort-keys": false,
+    "max-line-length": [false],
+    "trailing-comma": [false],
+    "no-parameter-properties": false,
+		"interface-name": [false],
+		"arrow-parens": false,
+    "one-line": [true, "check-open-brace"]
+  },
+  "rulesDirectory": [
+  ]
+}
