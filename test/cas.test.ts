@@ -37,5 +37,13 @@ describe('In Memory CAS', () => {
 			return Promise.all([storingPrimitive, retrievingRootNode])
 				.then(([primitiveKey, rootNode]) => expect(rootNode.someNumber).to.equal(primitiveKey));
 		});
+
+		it('should allow retrieving of MDAGs as fully rehydrated values', () => {
+			const cas = memoryCAS.create();
+			const original = {a: 5, b: 'hello', c: {d: 'deep'}};
+			const storing = cas.storeAsMDAG(original);
+			return storing.then(key => cas.retrieveFromMDAG(key)).then(value => expect(value).to.deep.equal(original));
+
+		});
 	});
 });
