@@ -43,7 +43,6 @@ describe('In Memory CAS', () => {
 			const original = {a: 5, b: 'hello', c: {d: 'deep'}};
 			const storing = cas.storeAsMDAG(original);
 			return storing.then(key => cas.retrieveFromMDAG(key)).then(value => expect(value).to.deep.equal(original));
-
 		});
 	});
 });
