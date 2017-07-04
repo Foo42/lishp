@@ -1,4 +1,5 @@
 import chai = require('chai');
+import {CAS} from '../src/lib/cas';
 import * as memoryCAS from '../src/lib/cas/in-memory-cas';
 import * as Evaluator from '../src/lib/eval';
 
@@ -29,7 +30,7 @@ The a binding generator is essentially a function (a macro?) which takes an expr
 
 
 describe('evaluator', () => {
-	let cas;
+	let cas: CAS;
 	let evaluator: Evaluator.Evaluator;
 	beforeEach(() => {
 		cas = memoryCAS.create();
@@ -48,6 +49,22 @@ describe('evaluator', () => {
 		return evaluator.evaluate('"5.5"').then(value => expect(value).to.equal('5.5'));
 	});
 
+	describe('evaluating keys', () => {
+		it('should evaluate a key to itself', () => {
+			const storing = cas.store(5);
+
+			return storing
+				.then(key => evaluator.evaluate(`${key}`))
+				.then(value => Promise.all([storing, value]))
+				.then(([key, value]) => expect(value).to.equal(key));
+		});
+
+		it('should evaluate to stored value when prefixed with >', () => {
+			return cas.store(5)
+				.then(key => evaluator.evaluate(`>${key}`))
+				.then(value => expect(value).to.equal(5));
+		});
+	});
 
 	describe('function evaluation', () => {
 		it('should apply the first element of a list as a built in function to the following elements', () => {
