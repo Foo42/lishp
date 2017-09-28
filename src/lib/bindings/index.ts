@@ -1,7 +1,7 @@
 import * as Promise from 'bluebird';
 import {CAS} from '../cas';
 
-interface BindingTable{
+export interface BindingTable{
 	bind(name: string, key: string): Promise<any>;
 	currentBinding(name): Promise<string>;
 	bindingHistory(name): Promise<string>;

@@ -1,13 +1,18 @@
 import * as Promise from 'bluebird';
+import {BindingTable} from '../bindings';
 import {CAS} from '../cas';
 import * as builtInFunctions from './builtInFunctions';
 import parse = require('s-expression');
+import * as _ from 'lodash';
 
 export interface Evaluator {
 	evaluate(expression: string | string[]): Promise<any>;
+	unlabel(expression: string | string[]): Promise<any[]>;
 }
 
-export function create(cas: CAS){
+function identity(x){return x;}
+
+export function create(cas: CAS, bindingTable: BindingTable){
 	function evaluate(expression: string | string[]): Promise<any> {
 		const parsed = expression instanceof Array ? expression : parse(expression);
 		if (parsed instanceof Array){
@@ -17,6 +22,35 @@ export function create(cas: CAS){
 				.then(argValues => findFunction(funcName).apply(null, argValues));
 		}
 		return applyOperators(parsed).then(coerce);
+	}
+
+	function deepMapExpression(expression, expressionFunc = identity, valueFunc = identity){
+		console.log('in deep map expression with ',expression);
+		if (expression instanceof Array){
+			return Promise.resolve(expressionFunc(Promise.map(expression, subExpression => deepMapExpression(subExpression, expressionFunc, valueFunc))));
+		}
+		return valueFunc(expression);
+	}
+
+	function isSymbol(value){
+		if (value instanceof String){
+			return false;
+		}
+		if (!_.isString(value)){
+			return false;
+		}
+		return /\w.*/.test(value);
+	}
+
+	function unlabel(expression: string | string[]): Promise<any[]> {
+		expression = expression instanceof Array ? expression : parse(expression);
+		return deepMapExpression(expression, identity, value => {
+			console.log(`${value} isSymbol = ${isSymbol(value)}`);
+			if (isSymbol(value) && value.startsWith('$')){
+				return 'replaced';
+			}
+			return value;
+		});
 	}
 
 	function applyOperators(value){
@@ -49,7 +83,8 @@ export function create(cas: CAS){
 	}
 
 	return {
-		evaluate
+		evaluate,
+		unlabel
 	};
 }
 
