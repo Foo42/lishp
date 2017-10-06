@@ -9,7 +9,7 @@ export interface Evaluator {
 	evaluate(expression: string | string[]): Promise<any>;
 }
 
-export function create(cas: CAS, bindingTable: BindingTable){
+export function create(cas: CAS){
 	function evaluate(expression: string | string[]): Promise<any> {
 		const parsed = expression instanceof Array ? expression : parse(expression);
 		if (parsed instanceof Array){

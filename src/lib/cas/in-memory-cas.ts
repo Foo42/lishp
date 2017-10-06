@@ -2,17 +2,34 @@ import * as Promise from 'bluebird';
 import {mapValues} from 'lodash';
 import {generateKey, HashTypes, parseKey} from './key';
 
-export function create(){
+interface KeyValueStore {
+	set(key: string, value: string): Promise<any>;
+	get(key: string): Promise<string | undefined>;
+}
+
+function createInMemoryKeyValueStore(): Promise<KeyValueStore> {
 	const storage = {};
+	return {
+		set(key:string, value: string): Promise<any> {
+			storage[key] = value;
+			return Promise.resolve();
+		},
+		get(key: string): Promise<string | undefined> {
+			return Promise.resolve(storage[key]);
+		}
+	}
+}
+
+export function create(){
+	const storage = createInMemoryKeyValueStore();
 	return {
 		store(value, type: HashTypes = 'value'): Promise<string>{
 			const serialised = JSON.stringify(value);
 			const key = generateKey(serialised, type);
-			storage[key] = serialised;
-			return Promise.resolve(key);
+			return storage.set(key, serialised).then(() => key);
 		},
 		retrieve(key: string): Promise<any> {
-			return Promise.resolve(JSON.parse(storage[key]));
+			return storage.get(key).then(JSON.parse);
 		},
 		storeAsMDAG(value: any): Promise<string>{
 			if (value instanceof Object){

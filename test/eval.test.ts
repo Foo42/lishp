@@ -17,11 +17,9 @@ const expect = chai.expect;
 describe('evaluator', () => {
 	let cas: CAS;
 	let evaluator: Evaluator.Evaluator;
-	let bindingTable: BindingTable;
 	beforeEach(() => {
 		cas = memoryCAS.create();
-		bindingTable = createBindingTable(cas);
-		evaluator = Evaluator.create(cas, bindingTable);
+		evaluator = Evaluator.create(cas);
 	});
 
 	it('evaluating an integer value should return itself as an integer', () => {
@@ -54,18 +52,22 @@ describe('evaluator', () => {
 	});
 
 	describe('labels', () => {
-	it('unlable should replace symbols prefixed with $ with key label last bound to', () => {
-		const original = '(f $somelabel)';
-		return cas.store(5)
-			.tap(key => bindingTable.bind('somelabel', key))
-			.then(key => {
-				return unlabel(original, bindingTable).then(unlabelled => expect(unlabelled).to.deep.equal(['f', key]));
-			});
-	});
+		it('unlable should replace symbols prefixed with $ with key label last bound to', () => {
+			const original = '(f $somelabel)';
+			const bindingTable = createBindingTable(cas);
+			return cas.store(5)
+				.tap(key => bindingTable.bind('somelabel', key))
+				.then(key => {
+					return unlabel(original, bindingTable).then(unlabelled => expect(unlabelled).to.deep.equal(['f', key]));
+				});
+		});
 
-	describe('Unlabelling evaluator decorator', () => {
+		describe('Unlabelling evaluator decorator', () => {
+			let bindingTable;
+
 			beforeEach(() => {
-				evaluator = withResolvedLabels(evaluator, bindingTable);
+					bindingTable = createBindingTable(cas);
+					evaluator = withResolvedLabels(evaluator, bindingTable);
 			});
 
 			it('should substitue labels for their values', () => {
