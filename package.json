@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "pretest": "npm run ts:compile",
     "test": "nyc --reporter=text mocha test/ --recursive --timeout 30000",
     "ts:compile": "tsc",
     "dev": "nodemon -e ts,hbs,json --exec \"npm run ts:compile && npm run test || echo fail\""

@@ -3,6 +3,8 @@ import {BindingTable, createBindingTable} from '../src/lib/bindings';
 import {CAS} from '../src/lib/cas';
 import * as memoryCAS from '../src/lib/cas/in-memory-cas';
 import * as Evaluator from '../src/lib/eval';
+import {withResolvedLabels} from '../src/lib/eval/decorators';
+import { unlabel } from '../src/lib/eval/decorators/unlable';
 
 const expect = chai.expect;
 /*
@@ -52,13 +54,28 @@ describe('evaluator', () => {
 	});
 
 	describe('labels', () => {
-		it('should substitue labels for their values', () => {
-			let expectedKey;
-			return cas.store(42)
-			.then(key => bindingTable.bind('foo', key))
-			.tap(key => expectedKey = key)
-			.then(() => evaluator.evaluate('$foo'))
-			.then(value => expect(value).to.equal(expectedKey));
+	it('unlable should replace symbols prefixed with $ with key label last bound to', () => {
+		const original = '(f $somelabel)';
+		return cas.store(5)
+			.tap(key => bindingTable.bind('somelabel', key))
+			.then(key => {
+				return unlabel(original, bindingTable).then(unlabelled => expect(unlabelled).to.deep.equal(['f', key]));
+			});
+	});
+
+	describe('Unlabelling evaluator decorator', () => {
+			beforeEach(() => {
+				evaluator = withResolvedLabels(evaluator, bindingTable);
+			});
+
+			it('should substitue labels for their values', () => {
+				let expectedKey;
+				return cas.store(42)
+				.tap(key => expectedKey = key)
+				.then(key => bindingTable.bind('foo', key))
+				.then(() => evaluator.evaluate('$foo'))
+				.then(value => expect(value).to.equal(expectedKey));
+			});
 		});
 	});
 
@@ -74,14 +91,6 @@ describe('evaluator', () => {
 		});
 	});
 
-	describe.only('unlabel', () => {
-		it('should replace symbols prefixed with $ with key label last bound to', () => {
-			const original = '(f $somelabel)';
-			return cas.store(5)
-				.tap(key => bindingTable.bind('somelabel', key))
-				.then(key => {
-					return evaluator.unlabel(original).then(unlabelled => expect(unlabelled).to.deep.equal(['f', key]));
-				});
-		});
-	});
+	describe('unlabel', () => {
+			});
 });
