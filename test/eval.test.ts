@@ -30,7 +30,7 @@ describe('evaluator', () => {
 		return evaluator.evaluate('5.5').then(value => expect(value).to.equal(5.5));
 	});
 
-	it('evaluating a string value should return itself as a string', () => {
+	it('evaluating a quoted string value should return itself as a string', () => {
 		return evaluator.evaluate('"5.5"').then(value => expect(value).to.equal('5.5'));
 	});
 

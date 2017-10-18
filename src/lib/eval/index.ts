@@ -22,16 +22,8 @@ export function create(cas: CAS){
 	}
 
 	function applyOperators(value){
-		if (value instanceof String){
-		return Promise.resolve(value);
-		}
-
-		const operator = /^>/.exec(value);
-		if (operator === null){
-			return Promise.resolve(value);
-		}
-		if (operator[0] === '>'){
-			const key = value.substr(1);
+		if(value.startsWith('>')){
+			const key = value.substring(1);
 			return cas.retrieve(key);
 		}
 		return Promise.resolve(value);
