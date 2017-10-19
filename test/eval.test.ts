@@ -62,6 +62,17 @@ describe('evaluator', () => {
 				});
 		});
 
+		it('unlable should replace symbols prefixed with >$ with key label last bound to prefixed with >', () => {
+			const original = '(f >$somelabel)';
+			const bindingTable = createBindingTable(cas);
+			return cas.store(5)
+				.tap(key => bindingTable.bind('somelabel', key))
+				.then(key => {
+					return unlabel(original, bindingTable).then(unlabelled => expect(unlabelled).to.deep.equal(['f', `>${key}`]));
+				});
+		});
+
+
 		describe('Unlabelling evaluator decorator', () => {
 			let bindingTable;
 
